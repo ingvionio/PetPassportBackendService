@@ -1,0 +1,6 @@
+@PetPassport_HostAddress = http://localhost:5287
+
+GET {{PetPassport_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -31,5 +31,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseStaticFiles(); // чтобы можно было отдавать файлы из wwwroot
+
 
 app.Run();

@@ -63,6 +63,29 @@ public class OwnersController : ControllerBase
 
         return Ok(pets);
     }
+    [HttpGet("by-telegram/{telegramId}")]
+    public async Task<ActionResult<OwnerWithPetsDto>> GetOwnerByTelegramId(long telegramId)
+    {
+        var owner = await _db.Owners
+            .Include(o => o.Pets)
+            .FirstOrDefaultAsync(o => o.TelegramId == telegramId);
+
+        if (owner == null)
+            return NotFound($"Владелец с TelegramId {telegramId} не найден.");
+
+        var dto = new OwnerWithPetsDto
+        {
+            OwnerId = owner.Id,
+            TelegramId = owner.TelegramId,
+            TelegramNick = owner.TelegramNick,
+            Pets = owner.Pets
+                .Select(p => new PetSummaryDto { Id = p.Id, Name = p.Name })
+                .ToList()
+        };
+
+        return Ok(dto);
+    }
+
 }
 
 // DTOs/PetSummaryDto.cs
@@ -77,4 +100,13 @@ public class OwnerRegistrationDto
     public long TelegramId { get; set; }
     public string? TelegramNick { get; set; }
 }
+// DTOs/OwnerWithPetsDto.cs
+public class OwnerWithPetsDto
+{
+    public int OwnerId { get; set; }
+    public long TelegramId { get; set; }
+    public string? TelegramNick { get; set; }
+    public List<PetSummaryDto> Pets { get; set; } = new();
+}
+
 

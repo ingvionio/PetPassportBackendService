@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 using PetPassport.Data;
 using PetPassport.Models;
 
@@ -8,11 +10,54 @@ using PetPassport.Models;
 public class PetsController : ControllerBase
 {
     private readonly AppDbContext _db;
-
-    public PetsController(AppDbContext db)
+    private readonly IWebHostEnvironment _env;
+    public PetsController(AppDbContext db, IWebHostEnvironment env)
     {
         _db = db;
+        _env = env;
     }
+
+    [HttpPost("{petId}/upload")]
+    public async Task<IActionResult> UploadPhoto(int petId, IFormFile file, [FromQuery] string? telegramFileId = null)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Файл не найден.");
+
+        var pet = await _db.Pets.Include(p => p.Photos).FirstOrDefaultAsync(p => p.Id == petId);
+        if (pet == null)
+            return NotFound($"Питомец с Id {petId} не найден.");
+
+        // Папка для хранения файлов
+        var uploadFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "pets", petId.ToString());
+        Directory.CreateDirectory(uploadFolder);
+
+        // Уникальное имя файла
+        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+        var filePath = Path.Combine(uploadFolder, fileName);
+
+        // Сохраняем файл на диск
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        // Относительный путь (для БД)
+        var relativeUrl = $"/uploads/pets/{petId}/{fileName}";
+
+        // Создаём запись в БД
+        var petPhoto = new PetPhoto
+        {
+            Url = relativeUrl,
+            TelegramFileId = telegramFileId,
+            PetId = pet.Id
+        };
+
+        _db.PetPhotos.Add(petPhoto);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { photoUrl = relativeUrl, petPhoto.Id });
+    }
+
 
     // POST api/pets
     [HttpPost]
@@ -51,8 +96,12 @@ public class PetsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PetDto>> GetPet(int id)
     {
-        var pet = await _db.Pets.FindAsync(id);
-        if (pet == null) return NotFound();
+        var pet = await _db.Pets
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (pet == null)
+            return NotFound();
 
         var dto = new PetDto
         {
@@ -61,11 +110,18 @@ public class PetsController : ControllerBase
             Breed = pet.Breed,
             WeightKg = pet.WeightKg,
             BirthDate = pet.BirthDate,
-            OwnerId = pet.OwnerId
+            OwnerId = pet.OwnerId,
+            Photos = pet.Photos.Select(photo => new PetPhotoDto
+            {
+                Id = photo.Id,
+                Url = photo.Url,
+                TelegramFileId = photo.TelegramFileId
+            }).ToList()
         };
 
         return Ok(dto);
     }
+
 }
 
 
@@ -82,4 +138,11 @@ public class PetCreateDto
 public class PetDto : PetCreateDto
 {
     public int Id { get; set; }
+    public List<PetPhotoDto> Photos { get; set; } = new();
+}
+public class PetPhotoDto
+{
+    public int Id { get; set; }
+    public string Url { get; set; } = string.Empty;
+    public string? TelegramFileId { get; set; }
 }

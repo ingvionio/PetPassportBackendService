@@ -27,6 +27,9 @@ public class PetsController : ControllerBase
         if (pet == null)
             return NotFound($"Питомец с Id {petId} не найден.");
 
+        if (pet.Photos.Count >= 4)
+            return BadRequest("Превышен лимит: у питомца может быть не более 4 фотографий.");
+
         // Папка для хранения файлов
         var uploadFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "pets", petId.ToString());
         Directory.CreateDirectory(uploadFolder);
@@ -70,6 +73,9 @@ public class PetsController : ControllerBase
 
         if (owner == null)
             return NotFound($"Владелец с Id {dto.OwnerId} не найден.");
+
+        if (owner.Pets.Count >= 4)
+            return BadRequest("Превышен лимит: у владельца не может быть больше 4 питомцев.");
 
         // Создаём нового питомца
         var pet = new Pet
@@ -122,8 +128,95 @@ public class PetsController : ControllerBase
         return Ok(dto);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdatePet(int id, [FromBody] PetUpdateDto dto)
+    {
+        var pet = await _db.Pets.FindAsync(id);
+        if (pet == null)
+            return NotFound($"Питомец с Id {id} не найден.");
+
+        // Обновляем только переданные поля
+        if (!string.IsNullOrWhiteSpace(dto.Name))
+            pet.Name = dto.Name;
+
+        if (!string.IsNullOrWhiteSpace(dto.Breed))
+            pet.Breed = dto.Breed;
+
+        if (dto.WeightKg.HasValue)
+            pet.WeightKg = dto.WeightKg;
+
+        if (dto.BirthDate.HasValue)
+            pet.BirthDate = dto.BirthDate;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Информация о питомце обновлена успешно." });
+    }
+
+    [HttpPut("{petId}/photos")]
+    public async Task<IActionResult> UpdatePetPhotos(int petId,
+    [FromForm] List<IFormFile>? newFiles,
+    [FromForm] List<int>? deletePhotoIds)
+    {
+        var pet = await _db.Pets.Include(p => p.Photos)
+                                .FirstOrDefaultAsync(p => p.Id == petId);
+
+        if (pet == null)
+            return NotFound($"Питомец с Id {petId} не найден.");
+
+        // 🔹 1. Удаляем указанные фото
+        if (deletePhotoIds != null && deletePhotoIds.Any())
+        {
+            var photosToDelete = pet.Photos.Where(p => deletePhotoIds.Contains(p.Id)).ToList();
+            foreach (var photo in photosToDelete)
+            {
+                // Удаляем файл с диска
+                var fullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", photo.Url.TrimStart('/'));
+                if (System.IO.File.Exists(fullPath))
+                    System.IO.File.Delete(fullPath);
+
+                _db.PetPhotos.Remove(photo);
+            }
+        }
+
+        // 🔹 2. Добавляем новые фото (если не превышен лимит)
+        if (newFiles != null && newFiles.Any())
+        {
+            int currentCount = pet.Photos.Count - (deletePhotoIds?.Count ?? 0);
+            int availableSlots = 4 - currentCount;
+
+            if (newFiles.Count > availableSlots)
+                return BadRequest($"Можно добавить максимум {availableSlots} новых фото (лимит — 4).");
+
+            var uploadFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "pets", petId.ToString());
+            Directory.CreateDirectory(uploadFolder);
+
+            foreach (var file in newFiles)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(uploadFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                    await file.CopyToAsync(stream);
+
+                var relativeUrl = $"/uploads/pets/{petId}/{fileName}";
+                _db.PetPhotos.Add(new PetPhoto { Url = relativeUrl, PetId = pet.Id });
+            }
+        }
+
+        await _db.SaveChangesAsync();
+        return Ok(new { message = "Фотографии питомца успешно обновлены." });
+    }
 }
 
+
+public class PetUpdateDto
+{
+    public string? Name { get; set; }
+    public string? Breed { get; set; }
+    public decimal? WeightKg { get; set; }
+    public DateTime? BirthDate { get; set; }
+}
 
 // DTOs/PetCreateDto.cs
 public class PetCreateDto

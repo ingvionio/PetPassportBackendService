@@ -15,12 +15,14 @@ namespace PetPassport.Models
 
         public decimal? WeightKg { get; set; }      // numeric
 
-        public DateTime? BirthDate { get; set; }
+        public DateOnly? BirthDate { get; set; }
 
         // FK к Owner
         public int OwnerId { get; set; }
         public Owner Owner { get; set; } = null!;
 
         public ICollection<PetPhoto> Photos { get; set; } = new List<PetPhoto>();
+
+        public ICollection<Vaccine> Vaccines { get; set;} = new List<Vaccine>();
     }
 }

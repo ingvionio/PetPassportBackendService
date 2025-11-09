@@ -215,7 +215,7 @@ public class PetUpdateDto
     public string? Name { get; set; }
     public string? Breed { get; set; }
     public decimal? WeightKg { get; set; }
-    public DateTime? BirthDate { get; set; }
+    public DateOnly? BirthDate { get; set; }
 }
 
 // DTOs/PetCreateDto.cs
@@ -224,7 +224,7 @@ public class PetCreateDto
     public string Name { get; set; } = null!;
     public string? Breed { get; set; }
     public decimal? WeightKg { get; set; }
-    public DateTime? BirthDate { get; set; }
+    public DateOnly? BirthDate { get; set; }
     public int OwnerId { get; set; } // привязка к владельцу
 }
 

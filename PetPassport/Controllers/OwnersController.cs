@@ -19,8 +19,7 @@ public class OwnersController : ControllerBase
     public async Task<ActionResult<int>> Register([FromBody] OwnerRegistrationDto dto)
     {
         // Проверяем, есть ли уже пользователь с таким TelegramId
-        var existingOwner = await _db.Owners
-            .FirstOrDefaultAsync(o => o.TelegramId == dto.TelegramId);
+        var existingOwner = await _db.Owners.FirstOrDefaultAsync(o => o.TelegramId == dto.TelegramId);
 
         if (existingOwner != null)
         {
@@ -63,6 +62,8 @@ public class OwnersController : ControllerBase
 
         return Ok(pets);
     }
+
+    // GET api/owners/by-telegram/{telegramId}
     [HttpGet("by-telegram/{telegramId}")]
     public async Task<ActionResult<OwnerWithPetsDto>> GetOwnerByTelegramId(long telegramId)
     {

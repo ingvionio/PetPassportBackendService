@@ -7,21 +7,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2️⃣ Добавляем контроллеры и Swagger
+// 2️⃣ Настраиваем CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // адрес фронтенда
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// 3️⃣ Добавляем контроллеры и Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 3️⃣ Автоматически применяем миграции при запуске (опционально)
+// 4️⃣ Автоматически применяем миграции
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate(); // если БД не существует — создаст
+    db.Database.Migrate();
 }
 
-// 4️⃣ Конфигурация HTTP-конвейера
+// 5️⃣ Настройка конвейера
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -29,9 +40,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+// ✅ CORS должно идти **до** MapControllers
+app.UseCors("AllowReactApp");
+
 app.UseAuthorization();
 app.MapControllers();
-app.UseStaticFiles(); // чтобы можно было отдавать файлы из wwwroot
-
 
 app.Run();

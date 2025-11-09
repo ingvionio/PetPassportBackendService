@@ -12,6 +12,8 @@ namespace PetPassport.Data
         public DbSet<Pet> Pets { get; set; } = null!;
         public DbSet<PetPhoto> PetPhotos { get; set; } = null!;
 
+        public DbSet<Vaccine> Vaccines { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -26,6 +28,12 @@ namespace PetPassport.Data
                 .HasOne(p => p.Owner)
                 .WithMany(o => o.Pets)
                 .HasForeignKey(p => p.OwnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Vaccine>()
+                .HasOne(p => p.pet)
+                .WithMany(o => o.Vaccines)
+                .HasForeignKey(p => p.PetId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Pet -> Photos (1 - *)

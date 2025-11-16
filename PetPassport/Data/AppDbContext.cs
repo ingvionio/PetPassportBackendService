@@ -11,8 +11,8 @@ namespace PetPassport.Data
         public DbSet<Owner> Owners { get; set; } = null!;
         public DbSet<Pet> Pets { get; set; } = null!;
         public DbSet<PetPhoto> PetPhotos { get; set; } = null!;
+        public DbSet<PetEvent> Events { get; set; }
 
-        public DbSet<Vaccine> Vaccines { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,18 +30,26 @@ namespace PetPassport.Data
                 .HasForeignKey(p => p.OwnerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<Vaccine>()
-                .HasOne(p => p.pet)
-                .WithMany(o => o.Vaccines)
-                .HasForeignKey(p => p.PetId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // Pet -> Photos (1 - *)
             modelBuilder.Entity<PetPhoto>()
                 .HasOne(pp => pp.Pet)
                 .WithMany(p => p.Photos)
                 .HasForeignKey(pp => pp.PetId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<PetEvent>()
+                .HasDiscriminator<string>("EventType")
+                .HasValue<VaccineEvent>("Vaccine")
+                .HasValue<DoctorVisitEvent>("DoctorVisit")
+                .HasValue<TreatmentEvent>("Treatment")
+                .HasValue<PetEvent>("Base");
+
+            //.HasValue<TreatmentEvent>("treatment")
+            //.HasValue<MedicalVisitEvent>("visit");
+
+            modelBuilder.Entity<PetEvent>()
+                .Property<string>("EventType")
+                .HasMaxLength(32);
 
             // Настройка колонок: пример для decimal precision
             modelBuilder.Entity<Pet>()

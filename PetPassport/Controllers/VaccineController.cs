@@ -1,107 +1,75 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using PetPassport.Data;
 using PetPassport.Models;
 
-namespace PetPassport.Controllers
+[ApiController]
+[Route("api/vaccine")]
+public class VaccineController: EventControllerBase<VaccineEvent, VaccineDto>
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class VaccineController : ControllerBase
+    public VaccineController(AppDbContext db) : base(db) { }
+
+    [HttpPost("create")]
+    protected override VaccineEvent MapCreateDto(VaccineDto dto)
     {
-        private readonly AppDbContext _db;
-
-        public VaccineController(AppDbContext db)
+        return new VaccineEvent
         {
-            _db = db;
-        }
+            PetId = dto.PetId,
+            Title = dto.Title,
+            Medicine = dto.Medicine,
+            EventDate = dto.EventDate,
+            PeriodValue = dto.PeriodValue,
+            PeriodUnit = dto.PeriodUnit,
+            NextVaccinationDate = dto.NextVaccinationDate,
 
-        // Добавление новой прививки
-        [HttpPost]
-        public async Task<ActionResult<int>> AddVaccine([FromBody] VaccineDto dto)
-        {
-            var pet = await _db.Pets
-                .Include(p => p.Vaccines)
-                .FirstOrDefaultAsync(p => p.Id == dto.PetId);
-
-            if (pet == null)
-                return NotFound("Нет питомца с таким Id");
-
-            var vaccine = new Vaccine
-            {
-                Title = dto.Title,
-                VacinationDate = dto.VaccinationDate,
-                PeriodValue = dto.PeriodValue,
-                PeriodUnit = dto.PeriodUnit,
-                NextVacinationDate = dto.NextVacinationDate,
-                PetId = pet.Id,
-                pet = pet
-            };
-
-            _db.Vaccines.Add(vaccine);
-            pet.Vaccines.Add(vaccine);
-
-            await _db.SaveChangesAsync();
-
-            return Ok(vaccine.Id);
-        }
-
-        // ✅ 1. Получение всех прививок питомца
-        [HttpGet("pet/{petId}")]
-        public async Task<ActionResult<IEnumerable<VaccineDto>>> GetVaccinesByPetId(int petId)
-        {
-            var pet = await _db.Pets.Include(p => p.Vaccines).FirstOrDefaultAsync(p => p.Id == petId);
-            if (pet == null)
-                return NotFound("Питомец не найден.");
-
-            var vaccines = pet.Vaccines.Select(v => new VaccineDto
-            {
-                Title = v.Title,
-                VaccinationDate = v.VacinationDate,
-                PeriodValue = v.PeriodValue,
-                PeriodUnit = v.PeriodUnit,
-                NextVacinationDate = v.NextVacinationDate,
-                PetId = v.PetId
-            }).ToList();
-
-            return Ok(vaccines);
-        }
-
-        // ✅ 2. Редактирование прививки
-        [HttpPut("{id}")]
-        public async Task<ActionResult> UpdateVaccine(int id, [FromBody] VaccineRedDto dto)
-        {
-            var vaccine = await _db.Vaccines.FirstOrDefaultAsync(v => v.Id == id);
-            if (vaccine == null)
-                return NotFound("Прививка не найдена.");
-
-            vaccine.Title = dto.Title;
-            vaccine.VacinationDate = (DateOnly)dto.VaccinationDate;
-            vaccine.PeriodValue = dto.PeriodValue;
-            vaccine.PeriodUnit = dto.PeriodUnit;
-            vaccine.NextVacinationDate = dto.NextVacinationDate;
-
-            await _db.SaveChangesAsync();
-
-            return NoContent(); // стандартный ответ при успешном обновлении
-        }
+            ReminderEnabled = dto.ReminderEnabled,
+            ReminderValue = dto.ReminderValue,
+            ReminderUnit = dto.ReminderUnit
+        };
     }
 
-    // DTO для передачи данных
-    public class VaccineDto
+    [HttpPut("{petId}")]
+    protected override void MapUpdateDto(VaccineEvent entity, VaccineDto dto)
     {
-        public string Title { get; set; }
-        public DateOnly VaccinationDate { get; set; }
-        public int? PeriodValue { get; set; }
-        public PeriodUnit? PeriodUnit { get; set; }
-        public DateOnly? NextVacinationDate { get; set; }
-        public int PetId { get; set; }
+        if (dto.Title != null) entity.Title = dto.Title;
+        if (dto.Medicine != null) entity.Medicine = dto.Medicine;
+
+        if (dto.EventDate != null) entity.EventDate = dto.EventDate;
+
+        if (dto.PeriodValue != null) entity.PeriodValue = dto.PeriodValue;
+        if (dto.PeriodUnit != null) entity.PeriodUnit = dto.PeriodUnit;
+        if (dto.NextVaccinationDate != null) entity.NextVaccinationDate = dto.NextVaccinationDate;
+
+        if (dto.ReminderEnabled != null) entity.ReminderEnabled = dto.ReminderEnabled;
+        if (dto.ReminderValue != null) entity.ReminderValue = dto.ReminderValue;
+        if (dto.ReminderUnit != null) entity.ReminderUnit = dto.ReminderUnit;
     }
 
-    public class VaccineRedDto : VaccineDto
-    {
-        public string? Title { get; set; }
 
-        public DateOnly? VaccinationDate { get; set; }
+    [HttpGet("{id}")]
+    protected override VaccineDto MapToReturnDto(VaccineEvent v)
+    {
+        return new VaccineDto
+        {
+            Title = v.Title,
+            Medicine = v.Medicine,
+            EventDate = v.EventDate,
+            PeriodValue = v.PeriodValue,
+            PeriodUnit = v.PeriodUnit,
+            NextVaccinationDate = v.NextVaccinationDate,
+
+            ReminderEnabled = v.ReminderEnabled,
+            ReminderValue = (int)v.ReminderValue,
+            ReminderUnit = (PeriodUnit)v.ReminderUnit
+        };
     }
 }
+
+public class VaccineDto : PetEventDto
+{
+    public string? Medicine { get; set; }
+    public int? PeriodValue { get; set; }
+    public PeriodUnit? PeriodUnit { get; set; }
+    public DateTime? NextVaccinationDate { get; set; }
+}
+
+

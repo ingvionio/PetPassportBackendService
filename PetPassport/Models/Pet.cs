@@ -23,6 +23,6 @@ namespace PetPassport.Models
 
         public ICollection<PetPhoto> Photos { get; set; } = new List<PetPhoto>();
 
-        public ICollection<Vaccine> Vaccines { get; set;} = new List<Vaccine>();
+        public ICollection<PetEvent> Events { get; set;} = new List<PetEvent>();
     }
 }

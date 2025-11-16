@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PetPassport.Data;
@@ -11,9 +12,11 @@ using PetPassport.Data;
 namespace PetPassport.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251116191844_DoctorVisit")]
+    partial class DoctorVisit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -91,8 +94,8 @@ namespace PetPassport.Migrations
 
                     b.Property<string>("EventType")
                         .IsRequired()
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)");
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
 
                     b.Property<int>("PetId")
                         .HasColumnType("integer");
@@ -146,30 +149,6 @@ namespace PetPassport.Migrations
                     b.ToTable("PetPhotos");
                 });
 
-            modelBuilder.Entity("PetPassport.Models.DoctorVisitEvent", b =>
-                {
-                    b.HasBaseType("PetPassport.Models.PetEvent");
-
-                    b.Property<string>("Clinic")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Diagnosis")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Doctor")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Recommendations")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Referrals")
-                        .HasColumnType("text");
-
-                    b.HasDiscriminator().HasValue("DoctorVisit");
-                });
-
             modelBuilder.Entity("PetPassport.Models.VaccineEvent", b =>
                 {
                     b.HasBaseType("PetPassport.Models.PetEvent");
@@ -188,39 +167,6 @@ namespace PetPassport.Migrations
                         .HasColumnType("integer");
 
                     b.HasDiscriminator().HasValue("Vaccine");
-                });
-
-            modelBuilder.Entity("TreatmentEvent", b =>
-                {
-                    b.HasBaseType("PetPassport.Models.PetEvent");
-
-                    b.Property<DateTime?>("NextTreatmentDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Parasite")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("PeriodUnit")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("PeriodValue")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Remedy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.ToTable("Events", t =>
-                        {
-                            t.Property("PeriodUnit")
-                                .HasColumnName("TreatmentEvent_PeriodUnit");
-
-                            t.Property("PeriodValue")
-                                .HasColumnName("TreatmentEvent_PeriodValue");
-                        });
-
-                    b.HasDiscriminator().HasValue("Treatment");
                 });
 
             modelBuilder.Entity("PetPassport.Models.Pet", b =>

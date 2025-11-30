@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetPassport.Data;
+using PetPassport.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // адрес фронтенда
+        policy.WithOrigins("http://localhost:3000",
+            "http://localhost:5173") // адрес фронтенда
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -23,16 +25,27 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 4️⃣ Регистрируем сервисы для работы с ботом
+builder.Services.AddHttpClient<IBotNotificationService, BotNotificationService>(client =>
+{
+    var baseUrl = builder.Configuration["BotService:BaseUrl"] ?? "http://localhost:5000";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+// 5️⃣ Регистрируем Background Service для проверки напоминаний
+builder.Services.AddHostedService<ReminderBackgroundService>();
+
 var app = builder.Build();
 
-// 4️⃣ Автоматически применяем миграции
+// 6️⃣ Автоматически применяем миграции
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
 
-// 5️⃣ Настройка конвейера
+// 7️⃣ Настройка конвейера
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

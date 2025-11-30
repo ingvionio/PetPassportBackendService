@@ -13,21 +13,25 @@
         public PeriodUnit? ReminderUnit { get; set; }
         public string EventType { get; set; } = string.Empty;
 
-        public DateTime? ReminderDate
-        {
-            get
-            {
-                if (!ReminderEnabled || !ReminderValue.HasValue || !ReminderUnit.HasValue)
-                    return null;
+        // Хранимое поле в БД для напоминаний
+        public DateTime? ReminderDate { get; set; }
+        
+        // Флаг, что напоминание уже отправлено
+        public bool IsReminderSent { get; set; } = false;
 
-                return ReminderUnit switch
-                {
-                    PeriodUnit.День => EventDate.AddDays(-ReminderValue.Value),
-                    PeriodUnit.Месяц => EventDate.AddMonths(-ReminderValue.Value),
-                    PeriodUnit.Год => EventDate.AddYears(-ReminderValue.Value),
-                    _ => null
-                };
-            }
+        // Вычисляемое свойство для обратной совместимости (если ReminderDate не установлен)
+        public DateTime? CalculateReminderDate()
+        {
+            if (!ReminderEnabled || !ReminderValue.HasValue || !ReminderUnit.HasValue)
+                return null;
+
+            return ReminderUnit switch
+            {
+                PeriodUnit.День => EventDate.AddDays(-ReminderValue.Value),
+                PeriodUnit.Месяц => EventDate.AddMonths(-ReminderValue.Value),
+                PeriodUnit.Год => EventDate.AddYears(-ReminderValue.Value),
+                _ => null
+            };
         }
     }
 }

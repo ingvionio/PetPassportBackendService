@@ -37,6 +37,13 @@ namespace PetPassport.Data
                 .HasForeignKey(pp => pp.PetId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Pet -> Events (1 - *), каскадное удаление (без навигационного свойства)
+            modelBuilder.Entity<PetEvent>()
+                .HasOne<Pet>()
+                .WithMany(p => p.Events)
+                .HasForeignKey(e => e.PetId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<PetEvent>()
                 .HasDiscriminator<string>("EventType")
                 .HasValue<VaccineEvent>("Vaccine")

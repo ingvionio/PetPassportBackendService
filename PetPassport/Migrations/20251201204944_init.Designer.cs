@@ -12,8 +12,8 @@ using PetPassport.Data;
 namespace PetPassport.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251201200021_Initial")]
-    partial class Initial
+    [Migration("20251201204944_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

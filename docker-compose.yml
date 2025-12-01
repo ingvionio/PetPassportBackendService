@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL база данных
+  # 1. 🐘 PostgreSQL база данных
   postgres:
     image: postgres:16-alpine
     container_name: petpassport-db
@@ -9,6 +9,7 @@ services:
       POSTGRES_DB: PetPassportDb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # Порт 5433:5432 - для доступа ИЗВНЕ. Внутренний порт всегда 5432.
     ports:
       - "5433:5432"
     volumes:
@@ -21,29 +22,51 @@ services:
     networks:
       - petpassport-network
 
-  # ASP.NET Core приложение
+  # 2. 🖥️ ASP.NET Core приложение (API)
   api:
     build:
-      context: .
+      context: .  
       dockerfile: Dockerfile
     container_name: petpassport-api
     environment:
+      # Хост базы данных - это имя сервиса: 'postgres'
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=PetPassportDb;Username=postgres;Password=${POSTGRES_PASSWORD}"
-      BotService__BaseUrl: "${BOT_SERVICE_URL}"
-      ASPNETCORE_URLS: "${ASPNETCORE_URLS}"
+      # Адрес бота - это имя сервиса: 'telegram-bot'
+      BotService__BaseUrl: "http://telegram-bot:8080" # <-- Исправлено для внутренней связи Docker
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
       CORS_ORIGINS: "${CORS_ORIGINS}"
       ASPNETCORE_ENVIRONMENT: Production
     ports:
-      - "8080:8080"
+      - "80:8080" # Публикуем API на порт 80 хоста (стандартный HTTP)
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      # Монтируем директорию для загрузок (чтобы файлы сохранялись при перезапуске)
       - ./uploads:/app/wwwroot/uploads
     networks:
       - petpassport-network
+
+  # 3. 🤖 Python Bot (Aiohttp)
+  telegram-bot:
+    build:
+      context: ./PetPassport-TgBot  # <-- Предполагаем, что Python лежит в папке 'bot-project'
+      dockerfile: Dockerfile
+    container_name: telegram-bot
     restart: unless-stopped
+    # Порт 8080:8080 - для доступа ИЗВНЕ (если вы используете webhook).
+    # Если бот использует Long Polling, этот порт не нужен.
+    ports:
+      - "8081:8080" # Меняем порт, чтобы не конфликтовал с API (8080)
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - HTTP_HOST=0.0.0.0
+      - HTTP_PORT=8080
+      # Адрес бэкенда - это имя сервиса: 'api'
+      - BASE_URL=http://api:8080 # <-- Имя сервиса API и его внутренний порт
+    volumes:
+      - ./img:/app/img
+    networks:
+      - petpassport-network
 
 volumes:
   postgres_data:
@@ -51,4 +74,3 @@ volumes:
 networks:
   petpassport-network:
     driver: bridge
-

@@ -104,7 +104,7 @@ public class OwnerRegistrationDto
 // DTOs/OwnerWithPetsDto.cs
 public class OwnerWithPetsDto
 {
-    public int OwnerId { get; set; }
+    public int OwnerId { get; set; } 
     public long TelegramId { get; set; }
     public string? TelegramNick { get; set; }
     public List<PetSummaryDto> Pets { get; set; } = new();

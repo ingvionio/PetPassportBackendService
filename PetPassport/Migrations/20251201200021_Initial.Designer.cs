@@ -12,8 +12,8 @@ using PetPassport.Data;
 namespace PetPassport.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251130193901_Notifications")]
-    partial class Notifications
+    [Migration("20251201200021_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -97,8 +97,14 @@ namespace PetPassport.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<bool>("IsReminderSent")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("PetId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReminderDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("ReminderEnabled")
                         .HasColumnType("boolean");

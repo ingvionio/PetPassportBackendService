@@ -366,3 +366,4 @@ settings.json
 
 *.png
 *.jpg
+.env

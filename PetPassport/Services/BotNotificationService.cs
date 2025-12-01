@@ -23,7 +23,7 @@ namespace PetPassport.Services
 
         public async Task<bool> SendReminderAsync(long telegramId, string petName, string eventType, string eventTitle, DateTime eventDate)
         {
-            var url = $"{_botServiceUrl.TrimEnd('/')}/api/notifications/reminder";
+            var url = $"{_botServiceUrl.TrimEnd('/')}/message";
             
             try
             {

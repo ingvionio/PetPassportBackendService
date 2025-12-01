@@ -20,6 +20,9 @@ public abstract class EventControllerBase<TEvent, TDto>
     public async Task<ActionResult<int>> Create([FromBody] TDto dto)
     {
         var entity = MapCreateDto(dto);
+        
+        // Вычисляем и сохраняем ReminderDate
+        UpdateReminderDate(entity);
 
         _db.Events.Add(entity);
         await _db.SaveChangesAsync();
@@ -52,7 +55,24 @@ public abstract class EventControllerBase<TEvent, TDto>
         if (entity == null)
             return NotFound();
 
+        // Сохраняем старые значения для проверки изменений
+        var oldReminderEnabled = entity.ReminderEnabled;
+        var oldReminderValue = entity.ReminderValue;
+        var oldReminderUnit = entity.ReminderUnit;
+        var oldEventDate = entity.EventDate;
+
         MapUpdateDto(entity, dto);
+
+        // Если изменились параметры напоминания или дата события, пересчитываем ReminderDate
+        // и сбрасываем флаг отправки
+        if (oldReminderEnabled != entity.ReminderEnabled ||
+            oldReminderValue != entity.ReminderValue ||
+            oldReminderUnit != entity.ReminderUnit ||
+            oldEventDate != entity.EventDate)
+        {
+            UpdateReminderDate(entity);
+            entity.IsReminderSent = false; // Сбрасываем флаг, так как напоминание изменилось
+        }
 
         await _db.SaveChangesAsync();
 
@@ -80,6 +100,12 @@ public abstract class EventControllerBase<TEvent, TDto>
     protected abstract TEvent MapCreateDto(TDto dto);
     protected abstract void MapUpdateDto(TEvent entity, TDto dto);
     protected abstract TDto MapToReturnDto(TEvent entity);
+
+    // Вспомогательный метод для обновления ReminderDate
+    private void UpdateReminderDate(TEvent entity)
+    {
+        entity.ReminderDate = entity.CalculateReminderDate();
+    }
 }
 
 public class PetEventDto

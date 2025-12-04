@@ -76,6 +76,71 @@ public class EventsController : ControllerBase
 
         return Ok(allEvents);
     }
+
+    // Получение уже прошедших процедур для питомца
+    [HttpGet("past/{petId}")]
+    public async Task<ActionResult<List<UpcomingEventDto>>> GetPastEvents(int petId)
+    {
+        var now = DateTime.UtcNow;
+
+        // Доктор
+        var doctorVisits = await _db.Events
+            .OfType<DoctorVisitEvent>()
+            .Where(e => e.PetId == petId && e.EventDate < now)
+            .Select(e => new UpcomingEventDto
+            {
+                Id = e.Id,
+                Type = "doctor-visit",
+                Title = e.Title,
+                EventDate = e.EventDate,
+                ReminderEnabled = e.ReminderEnabled,
+                Clinic = e.Clinic,
+                Doctor = e.Doctor
+            })
+            .ToListAsync();
+
+        // Вакцины
+        var vaccines = await _db.Events
+            .OfType<VaccineEvent>()
+            .Where(e => e.PetId == petId && e.EventDate < now)
+            .Select(e => new UpcomingEventDto
+            {
+                Id = e.Id,
+                Type = "vaccine",
+                Title = e.Title,
+                EventDate = e.EventDate,
+                ReminderEnabled = e.ReminderEnabled,
+                Medicine = e.Medicine,
+                NextVaccinationDate = e.NextVaccinationDate
+            })
+            .ToListAsync();
+
+        // Обработки
+        var treatments = await _db.Events
+            .OfType<TreatmentEvent>()
+            .Where(e => e.PetId == petId && e.EventDate < now)
+            .Select(e => new UpcomingEventDto
+            {
+                Id = e.Id,
+                Type = "treatment",
+                Title = e.Title,
+                EventDate = e.EventDate,
+                ReminderEnabled = e.ReminderEnabled,
+                Remedy = e.Remedy,
+                Parasite = e.Parasite,
+                NextTreatmentDate = e.NextTreatmentDate
+            })
+            .ToListAsync();
+
+        // Объединяем и сортируем по дате (сначала самые свежие прошедшие)
+        var allEvents = doctorVisits
+            .Concat(vaccines)
+            .Concat(treatments)
+            .OrderByDescending(e => e.EventDate)
+            .ToList();
+
+        return Ok(allEvents);
+    }
 }
 
 // DTO для предстоящих событий

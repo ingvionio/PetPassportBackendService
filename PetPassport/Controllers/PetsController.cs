@@ -207,6 +207,92 @@ public class PetsController : ControllerBase
         await _db.SaveChangesAsync();
         return Ok(new { message = "Фотографии питомца успешно обновлены." });
     }
+
+    // DELETE api/pets/{petId}/photos/{photoId}
+    [HttpDelete("{petId}/photos/{photoId}")]
+    public async Task<IActionResult> DeletePhoto(int petId, int photoId)
+    {
+        var pet = await _db.Pets
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.Id == petId);
+
+        if (pet == null)
+            return NotFound($"Питомец с Id {petId} не найден.");
+
+        var photo = pet.Photos.FirstOrDefault(p => p.Id == photoId);
+        if (photo == null)
+            return NotFound($"Фотография с Id {photoId} не найдена у питомца {petId}.");
+
+        // Удаляем файл с диска
+        var fullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", photo.Url.TrimStart('/'));
+        if (System.IO.File.Exists(fullPath))
+        {
+            try
+            {
+                System.IO.File.Delete(fullPath);
+            }
+            catch (Exception ex)
+            {
+                // Логируем ошибку, но продолжаем удаление записи из БД
+                // Можно добавить ILogger для логирования
+            }
+        }
+
+        // Удаляем запись из БД
+        _db.PetPhotos.Remove(photo);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Фотография успешно удалена." });
+    }
+
+    // DELETE api/pets/{id}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeletePet(int id)
+    {
+        var pet = await _db.Pets
+            .Include(p => p.Photos)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (pet == null)
+            return NotFound($"Питомец с Id {id} не найден.");
+
+        // Удаляем все фотографии питомца с диска
+        foreach (var photo in pet.Photos)
+        {
+            var fullPath = Path.Combine(_env.WebRootPath ?? "wwwroot", photo.Url.TrimStart('/'));
+            if (System.IO.File.Exists(fullPath))
+            {
+                try
+                {
+                    System.IO.File.Delete(fullPath);
+                }
+                catch
+                {
+                    // Игнорируем ошибки удаления файлов
+                }
+            }
+        }
+
+        // Пытаемся удалить папку питомца, если она пустая
+        try
+        {
+            var petFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "pets", id.ToString());
+            if (Directory.Exists(petFolder) && !Directory.EnumerateFileSystemEntries(petFolder).Any())
+            {
+                Directory.Delete(petFolder);
+            }
+        }
+        catch
+        {
+            // Игнорируем ошибки удаления папки
+        }
+
+        // Удаляем питомца (фото и события удалятся каскадно)
+        _db.Pets.Remove(pet);
+        await _db.SaveChangesAsync();
+
+        return Ok(new { message = "Питомец успешно удалён." });
+    }
 }
 
 

@@ -88,7 +88,7 @@ async def main():
     setup_application(app, dp, bot=bot)
 
     print("Webhook registered at:", WEB_HOOK_PATH)
-    await web._run_app(app, host=WEB_SERVER_HOST, port=9000)
+    await web._run_app(app, host=WEB_SERVER_HOST, port=8080)
 
 
 if __name__ == "__main__":

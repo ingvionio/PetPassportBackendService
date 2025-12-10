@@ -56,7 +56,7 @@ services:
     # Порт 8080:8080 - для доступа ИЗВНЕ (если вы используете webhook).
     # Если бот использует Long Polling, этот порт не нужен.
     ports:
-      - "8081:8080" # Меняем порт, чтобы не конфликтовал с API (8080)
+      - "8082:8080" # Меняем порт, чтобы не конфликтовал с API (8080)
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - HTTP_HOST=0.0.0.0
@@ -65,6 +65,19 @@ services:
       - BASE_URL=http://api:8080 # <-- Имя сервиса API и его внутренний порт
     volumes:
       - ./img:/app/img
+    networks:
+      - petpassport-network
+
+  # 4. 🌐 Frontend (React + Nginx)
+  frontend:
+    build:
+      context: ../Pet_Passport/front
+      dockerfile: Dockerfile
+    container_name: petpassport-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
     networks:
       - petpassport-network
 

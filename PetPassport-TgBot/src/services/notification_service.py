@@ -1,6 +1,7 @@
 # http_handlers.py
 import logging
 
+from datetime import datetime, timedelta
 from aiogram import Bot
 from aiohttp import web
 
@@ -41,11 +42,27 @@ async def notification_owner_handler(request: web.Request):
         event_date = data.get('event_date') or data.get('eventDate', '-')
         pet_breed = data.get('pet_breed') or data.get('petBreed')
 
-        # 4. Формирование сообщения
+        localized_date_str = event_date
 
+        if event_date and event_date != '-':
+            try:
+                if event_date.endswith('Z'):
+                    date_str_with_tz = event_date.replace('Z', '+00:00')
+                    utc_dt = datetime.fromisoformat(date_str_with_tz)
+                else:
+                    utc_dt = datetime.fromisoformat(event_date)
+
+                time_offset = timedelta(hours=5)
+                local_dt = utc_dt + time_offset
+                localized_date_str = local_dt.strftime("%d.%m.%Y в %H:%M")
+
+            except Exception as e:
+                localized_date_str = event_date
+
+        # 4. Формирование сообщения
         message = f"{emoji_type(event_type)} Уведомление\n"
         message += (f"{emoji_pet(pet_breed)} Для питомца: {pet_name} ожидается {event_title}\n"
-                    f"📅 Дата: {event_date}\n")
+                    f"📅 Дата: {localized_date_str}\n")
 
         logging.info(f"📩 POST запрос: ID={telegram_id}, Событие='{event_title}'")
 

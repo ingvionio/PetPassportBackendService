@@ -1,7 +1,7 @@
 def emoji_type(emoji_type):
-    if emoji_type == "Посещение врача": return "👨‍⚕️"
-    elif emoji_type == "Прививка": return "💉"
-    elif emoji_type == "Обработка": return "💊"
+    if emoji_type == "DoctorVisit": return "👨‍⚕️"
+    elif emoji_type == "Vaccine": return "💉"
+    elif emoji_type == "Treatment": return "💊"
 
 
 def emoji_pet(breed):

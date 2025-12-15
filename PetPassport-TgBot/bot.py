@@ -7,7 +7,7 @@ from aiogram.webhook.aiohttp_server import (
     setup_application,
 )
 
-from src.services.notification_service import message_handler
+from src.services.notification_service import notification_owner_handler
 
 from src.config import (
     BOT_TOKEN,
@@ -46,7 +46,7 @@ async def main():
     webhook_handler.register(app, path=WEB_HOOK_PATH)
 
     app['bot'] = bot
-    app.router.add_post("/message", message_handler)
+    app.router.add_post("/message", notification_owner_handler)
 
     setup_application(app, dp, bot=bot)
 

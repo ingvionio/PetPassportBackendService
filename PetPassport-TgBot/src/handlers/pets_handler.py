@@ -34,7 +34,7 @@ async def pets_list(callback_query: CallbackQuery, state = FSMContext):
 
     elif len(pets) > 1:
         await callback_query.message.answer_photo(
-            photo=FSInputFile("src/img/zaglushka.jpg"),
+            photo=FSInputFile("src/img/choice_pet.jpg"),
             caption="📋 Выбери питомца:",
             parse_mode="Markdown",
             reply_markup=await get_pets_list_keyboard(pets),
@@ -98,7 +98,7 @@ async def handle_pet_callback(callback_query: types.CallbackQuery):
 
     if not photo_sent:
         await callback_query.message.answer_photo(
-            photo=FSInputFile("src/img/zaglushka.jpg"),
+            photo=FSInputFile("src/img/zaglushka_pet.jpg"),
             caption=caption,
             parse_mode="Markdown",
             reply_markup=await get_my_pet_keyboard(pet_id),

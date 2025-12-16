@@ -1,6 +1,7 @@
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
+    WebAppInfo
 )
 
 from src.config import SERVER_URL
@@ -22,14 +23,16 @@ async def get_pets_list_keyboard(pets: list[dict]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-async def get_my_pet_keyboard(pet_id : int) -> InlineKeyboardMarkup:
+async def get_my_pet_keyboard(pet_id: int) -> InlineKeyboardMarkup:
+
+    web_app_url = f"{SERVER_URL.rstrip('/')}/?id={pet_id}"
+    web_app_info = WebAppInfo(url=web_app_url)
+
     return InlineKeyboardMarkup(inline_keyboard=
     [
-        # Формируем ссылку на паспорт питомца.
-        # Добавляем разделяющий слэш, чтобы порт и id не слипались (7205 -> 7205/3, а не 72053).
         [InlineKeyboardButton(
             text="Паспорт питомца 📕",
-            url=f"{SERVER_URL.rstrip('/')}/?id={pet_id}"
+            web_app=web_app_info,
         )],
         [InlineKeyboardButton(text="Редактировать информацию о питомце 🐶", callback_data=f"settings_my_pet_{pet_id}")],
         [InlineKeyboardButton(text="Посмотреть питомца(-ев) 🐱", callback_data="pets_list")],

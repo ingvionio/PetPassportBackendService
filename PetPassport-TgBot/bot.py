@@ -1,13 +1,13 @@
 import asyncio
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiohttp import web
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler,
     setup_application,
 )
-
 from src.services.notification_service import notification_owner_handler
+from src.config import private_commands
 
 from src.config import (
     BOT_TOKEN,
@@ -28,6 +28,11 @@ logging.basicConfig(level=logging.INFO)
 
 async def on_startup(bot: Bot) -> None:
     await bot.set_webhook(f"{WEB_HOOK_URL}{WEB_HOOK_PATH}")
+
+    await bot.set_my_commands(
+        commands=private_commands,
+        scope=types.BotCommandScopeAllPrivateChats()
+    )
 
 
 async def main():

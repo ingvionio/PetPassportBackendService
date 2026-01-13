@@ -11,7 +11,7 @@ namespace PetPassport.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ReminderBackgroundService> _logger;
-        private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(5); // Проверка каждую минуту (для тестирования)
+        private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(5); // Проверка каждую минуту (для тестирования)
 
         public ReminderBackgroundService(
             IServiceProvider serviceProvider,
@@ -88,7 +88,7 @@ namespace PetPassport.Services
                         item.Event.Id, item.TelegramId, item.PetName, item.Event.EventType);
                     
                     var success = await botService.SendReminderAsync(
-                        item.TelegramId,
+                        (long)item.TelegramId,
                         item.PetName,
                         item.Event.EventType,
                         item.Event.Title,

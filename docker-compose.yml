@@ -64,8 +64,8 @@ services:
       - WEB_SERVER_HOST=${WEB_SERVER_HOST}
       - HTTP_HOST=0.0.0.0
       - HTTP_PORT=8080
-      - BASE_URL=http://api:8080
-      - SERVER_URL=http://api:8080
+      - BASE_URL=${BASE_URL}
+      - SERVER_URL=${SERVER_URL}
 
     volumes:
       - ./img:/app/img

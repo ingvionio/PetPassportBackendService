@@ -37,7 +37,7 @@ services:
       CORS_ORIGINS: "${CORS_ORIGINS}"
       ASPNETCORE_ENVIRONMENT: Production
     ports:
-      - "80:8080" # Публикуем API на порт 80 хоста (стандартный HTTP)
+      - "8080:8080" # Публикуем API на порт 80 хоста (стандартный HTTP)
     depends_on:
       postgres:
         condition: service_healthy

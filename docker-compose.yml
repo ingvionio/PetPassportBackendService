@@ -59,10 +59,13 @@ services:
       - "8082:8080" # Меняем порт, чтобы не конфликтовал с API (8080)
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
+      - WEB_HOOK_URL=${WEB_HOOK_URL}
+      - WEB_HOOK_PATH=${WEB_HOOK_PATH}
+      - WEB_SERVER_HOST=${WEB_SERVER_HOST}
       - HTTP_HOST=0.0.0.0
       - HTTP_PORT=8080
-      # Адрес бэкенда - это имя сервиса: 'api'
-      - BASE_URL=http://api:8080 # <-- Имя сервиса API и его внутренний порт
+      - BASE_URL=http://api:8080
+
     volumes:
       - ./img:/app/img
     networks:

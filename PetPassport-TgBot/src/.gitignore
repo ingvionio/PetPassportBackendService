@@ -2,10 +2,8 @@
 *.pyc
 *.log
 *.ovpn
-*.jpg
 *.png
 *.csv
 temp_photo/
-img/
 ../.env
 .venv

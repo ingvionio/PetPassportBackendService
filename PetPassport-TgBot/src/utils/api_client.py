@@ -151,14 +151,14 @@ async def update_pet_photo(pet_id: int, photo_bytes: bytes) -> bool:
         return False
 
 
-async def send_message_to_bot(telegram_id:int, pet_name:str, event_title: str, event_type:str, custom_data: dict = None):
+async def send_message_to_bot(telegram_id:int, pet_name:str, event_title: str, event_type:str,event_date: str, custom_data: dict = None):
 
     payload = {
         "telegram_id": telegram_id,
         "pet_name": pet_name,
         "event_type": event_type,
         "event_title": event_title,
-        "event_date": datetime
+        "event_date": event_date
     }
 
     if custom_data:

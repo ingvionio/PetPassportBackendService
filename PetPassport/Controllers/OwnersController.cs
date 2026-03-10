@@ -14,6 +14,62 @@ public class OwnersController : ControllerBase
         _db = db;
     }
 
+    // POST api/owners/register-login
+    [HttpPost("register-login")]
+    public async Task<ActionResult<int>> RegisterByLogin(
+        [FromBody] OwnerLoginRegisterDto dto)
+    {
+        var exists = await _db.Owners
+            .AnyAsync(o => o.login == dto.Login);
+
+        if (exists)
+            return BadRequest("Пользователь с таким логином уже существует");
+
+        var owner = new Owner
+        {
+            login = dto.Login,
+            password = dto.Password // ⚠ пока без хэша
+        };
+
+        _db.Owners.Add(owner);
+        await _db.SaveChangesAsync();
+
+        return Ok(owner.Id);
+    }
+
+    // POST api/owners/login
+    [HttpPost("login")]
+    public async Task<ActionResult<OwnerLoginResultDto>> Login(
+        [FromBody] OwnerLoginRegisterDto dto)
+    {
+        var owner = await _db.Owners.FirstOrDefaultAsync(o =>
+            o.login == dto.Login &&
+            o.password == dto.Password
+        );
+
+        if (owner == null)
+            return Unauthorized("Неверный логин или пароль");
+
+        return Ok(new OwnerLoginResultDto
+        {
+            OwnerId = owner.Id
+        });
+    }
+
+    // GET api/owners/by-login/{login}
+    [HttpGet("by-login/{login}")]
+    public async Task<ActionResult<int>> GetOwnerIdByLogin(string login)
+    {
+        var owner = await _db.Owners
+            .FirstOrDefaultAsync(o => o.login == login);
+
+        if (owner == null)
+            return NotFound("Пользователь не найден");
+
+        return Ok(owner.Id);
+    }
+
+
     // POST api/owners/register
     [HttpPost("register")]
     public async Task<ActionResult<int>> Register([FromBody] OwnerRegistrationDto dto)
@@ -77,7 +133,7 @@ public class OwnersController : ControllerBase
         var dto = new OwnerWithPetsDto
         {
             OwnerId = owner.Id,
-            TelegramId = owner.TelegramId,
+            TelegramId = (long)owner.TelegramId,
             TelegramNick = owner.TelegramNick,
             Pets = owner.Pets
                 .Select(p => new PetSummaryDto { Id = p.Id, Name = p.Name })
@@ -109,5 +165,17 @@ public class OwnerWithPetsDto
     public string? TelegramNick { get; set; }
     public List<PetSummaryDto> Pets { get; set; } = new();
 }
+
+public class OwnerLoginRegisterDto
+{
+    public string Login { get; set; } = null!;
+    public string Password { get; set; } = null!;
+}
+
+public class OwnerLoginResultDto
+{
+    public int OwnerId { get; set; }
+}
+
 
 

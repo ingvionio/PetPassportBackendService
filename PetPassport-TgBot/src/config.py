@@ -1,4 +1,6 @@
 import os
+
+from aiogram.types import BotCommand
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,3 +14,7 @@ OWNER_ID = os.getenv("OWNER_ID")
 SERVER_URL = os.getenv("SERVER_URL")
 MAP_URL = os.getenv("MAP_URL")
 BASE_URL = os.getenv("BASE_URL")
+
+private_commands = [
+    BotCommand(command="/start", description="Начать работу с ботом")
+]

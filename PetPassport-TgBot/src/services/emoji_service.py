@@ -1,10 +1,10 @@
-async def emoji_type(emoji_type):
-    if emoji_type == "Посещение врача": return "👨‍⚕️"
-    elif emoji_type == "Прививка": return "💉"
-    elif emoji_type == "Обработка": return "💊"
+def emoji_type(emoji_type):
+    if emoji_type == "DoctorVisit": return "👨‍⚕️"
+    elif emoji_type == "Vaccine": return "💉"
+    elif emoji_type == "Treatment": return "💊"
 
 
-async def emoji_pet(breed):
+def emoji_pet(breed):
     breed_lower = breed.lower() if breed else ""
 
     # Собаки

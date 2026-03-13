@@ -14,22 +14,22 @@ public class EventsController : ControllerBase
         _db = db;
     }
 
-    // Получение предстоящих процедур для питомца
-    [HttpGet("upcoming/{petId}")]
-    public async Task<ActionResult<List<UpcomingEventDto>>> GetUpcomingEvents(int petId)
+    // GET /api/events/{petId}?status=Upcoming
+    [HttpGet("{petId}")]
+    public async Task<ActionResult<List<EventsDto>>> GetEvents(
+        int petId,
+        [FromQuery] EventStatus? status = null)
     {
-        var now = DateTime.UtcNow;
-
-        // Получаем все предстоящие события всех типов для питомца
         var doctorVisits = await _db.Events
             .OfType<DoctorVisitEvent>()
-            .Where(e => e.PetId == petId && e.EventDate >= now)
-            .Select(e => new UpcomingEventDto
+            .Where(e => e.PetId == petId && (status == null || e.Status == status))
+            .Select(e => new EventsDto
             {
                 Id = e.Id,
                 Type = "doctor-visit",
                 Title = e.Title,
                 EventDate = e.EventDate,
+                Status = e.Status,
                 ReminderEnabled = e.ReminderEnabled,
                 Clinic = e.Clinic,
                 Doctor = e.Doctor
@@ -38,13 +38,14 @@ public class EventsController : ControllerBase
 
         var vaccines = await _db.Events
             .OfType<VaccineEvent>()
-            .Where(e => e.PetId == petId && e.EventDate >= now)
-            .Select(e => new UpcomingEventDto
+            .Where(e => e.PetId == petId && (status == null || e.Status == status))
+            .Select(e => new EventsDto
             {
                 Id = e.Id,
                 Type = "vaccine",
                 Title = e.Title,
                 EventDate = e.EventDate,
+                Status = e.Status,
                 ReminderEnabled = e.ReminderEnabled,
                 Medicine = e.Medicine,
                 NextVaccinationDate = e.NextVaccinationDate
@@ -53,13 +54,14 @@ public class EventsController : ControllerBase
 
         var treatments = await _db.Events
             .OfType<TreatmentEvent>()
-            .Where(e => e.PetId == petId && e.EventDate >= now)
-            .Select(e => new UpcomingEventDto
+            .Where(e => e.PetId == petId && (status == null || e.Status == status))
+            .Select(e => new EventsDto
             {
                 Id = e.Id,
                 Type = "treatment",
                 Title = e.Title,
                 EventDate = e.EventDate,
+                Status = e.Status,
                 ReminderEnabled = e.ReminderEnabled,
                 Remedy = e.Remedy,
                 Parasite = e.Parasite,
@@ -67,7 +69,6 @@ public class EventsController : ControllerBase
             })
             .ToListAsync();
 
-        // Объединяем все события и сортируем по дате
         var allEvents = doctorVisits
             .Concat(vaccines)
             .Concat(treatments)
@@ -76,75 +77,38 @@ public class EventsController : ControllerBase
 
         return Ok(allEvents);
     }
-
-    // Получение уже прошедших процедур для питомца
-    [HttpGet("past/{petId}")]
-    public async Task<ActionResult<List<UpcomingEventDto>>> GetPastEvents(int petId)
+    // PATCH /api/events/{id}/status
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult> UpdateStatus(int id, [FromBody] UpdateEventStatusDto dto)
     {
-        var now = DateTime.UtcNow;
+        var entity = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
 
-        // Доктор
-        var doctorVisits = await _db.Events
-            .OfType<DoctorVisitEvent>()
-            .Where(e => e.PetId == petId && e.EventDate < now)
-            .Select(e => new UpcomingEventDto
-            {
-                Id = e.Id,
-                Type = "doctor-visit",
-                Title = e.Title,
-                EventDate = e.EventDate,
-                ReminderEnabled = e.ReminderEnabled,
-                Clinic = e.Clinic,
-                Doctor = e.Doctor
-            })
-            .ToListAsync();
+        if (entity == null)
+            return NotFound();
 
-        // Вакцины
-        var vaccines = await _db.Events
-            .OfType<VaccineEvent>()
-            .Where(e => e.PetId == petId && e.EventDate < now)
-            .Select(e => new UpcomingEventDto
-            {
-                Id = e.Id,
-                Type = "vaccine",
-                Title = e.Title,
-                EventDate = e.EventDate,
-                ReminderEnabled = e.ReminderEnabled,
-                Medicine = e.Medicine,
-                NextVaccinationDate = e.NextVaccinationDate
-            })
-            .ToListAsync();
+        entity.Status = dto.Status;
+        await _db.SaveChangesAsync();
+        return NoContent();
+    }
 
-        // Обработки
-        var treatments = await _db.Events
-            .OfType<TreatmentEvent>()
-            .Where(e => e.PetId == petId && e.EventDate < now)
-            .Select(e => new UpcomingEventDto
-            {
-                Id = e.Id,
-                Type = "treatment",
-                Title = e.Title,
-                EventDate = e.EventDate,
-                ReminderEnabled = e.ReminderEnabled,
-                Remedy = e.Remedy,
-                Parasite = e.Parasite,
-                NextTreatmentDate = e.NextTreatmentDate
-            })
-            .ToListAsync();
+    // DELETE /api/events/{id}
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Delete(int id)
+    {
+        var entity = await _db.Events.FirstOrDefaultAsync(e => e.Id == id);
 
-        // Объединяем и сортируем по дате (сначала самые свежие прошедшие)
-        var allEvents = doctorVisits
-            .Concat(vaccines)
-            .Concat(treatments)
-            .OrderByDescending(e => e.EventDate)
-            .ToList();
+        if (entity == null)
+            return NotFound();
 
-        return Ok(allEvents);
+        _db.Events.Remove(entity);
+        await _db.SaveChangesAsync();
+        return NoContent();
     }
 }
 
-// DTO для предстоящих событий
-public class UpcomingEventDto
+
+// DTO для событий
+public class EventsDto
 {
     public int Id { get; set; }
     public string Type { get; set; } // "doctor-visit", "vaccine", "treatment"
@@ -164,4 +128,5 @@ public class UpcomingEventDto
     public string? Remedy { get; set; }
     public string? Parasite { get; set; }
     public DateTime? NextTreatmentDate { get; set; }
+    public EventStatus Status { get; set; }
 }

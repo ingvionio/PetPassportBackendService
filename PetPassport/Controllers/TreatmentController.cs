@@ -12,24 +12,18 @@ public class TreatmentController : EventControllerBase<TreatmentEvent, Treatment
     [HttpPost("create")]
     protected override TreatmentEvent MapCreateDto(TreatmentDto dto)
     {
-        return new TreatmentEvent
+        var entity = new TreatmentEvent
         {
-            PetId = dto.PetId,
-            Title = dto.Title,
-            EventDate = dto.EventDate,
-
             Remedy = dto.Remedy,
             Parasite = dto.Parasite,
-
             PeriodValue = dto.PeriodValue,
             PeriodUnit = dto.PeriodUnit,
-            NextTreatmentDate = dto.NextTreatmentDate,
-
-            ReminderEnabled = dto.ReminderEnabled,
-            ReminderValue = dto.ReminderValue,
-            ReminderUnit = dto.ReminderUnit
+            NextTreatmentDate = dto.NextTreatmentDate
         };
+        MapBaseDto(entity, dto); // общие поля
+        return entity;
     }
+    
 
     // --- UPDATE ---
     [HttpPut("{id}")]
@@ -52,25 +46,19 @@ public class TreatmentController : EventControllerBase<TreatmentEvent, Treatment
 
     // --- GET ONE ---
     [HttpGet("{id}")]
-    protected override TreatmentDto MapToReturnDto(TreatmentEvent t)
+protected override TreatmentDto MapToReturnDto(TreatmentEvent t)
+{
+    var dto = new TreatmentDto
     {
-        return new TreatmentDto
-        {
-            Title = t.Title,
-            EventDate = t.EventDate,
-
-            Remedy = t.Remedy,
-            Parasite = t.Parasite,
-
-            PeriodValue = t.PeriodValue,
-            PeriodUnit = t.PeriodUnit,
-            NextTreatmentDate = t.NextTreatmentDate,
-
-            ReminderEnabled = t.ReminderEnabled,
-            ReminderValue = (int)t.ReminderValue,
-            ReminderUnit = (PeriodUnit)t.ReminderUnit
-        };
-    }
+        Remedy = t.Remedy,
+        Parasite = t.Parasite,
+        PeriodValue = t.PeriodValue,
+        PeriodUnit = t.PeriodUnit,
+        NextTreatmentDate = t.NextTreatmentDate
+    };
+    dto.MapFromEntity(t); // общие поля
+    return dto;
+}
 }
 
 public class TreatmentDto : PetEventDto

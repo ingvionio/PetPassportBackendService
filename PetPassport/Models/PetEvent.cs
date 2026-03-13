@@ -18,6 +18,7 @@
         
         // Флаг, что напоминание уже отправлено
         public bool IsReminderSent { get; set; } = false;
+        public EventStatus Status { get; set; } = EventStatus.Upcoming;
 
         // Вычисляемое свойство для обратной совместимости (если ReminderDate не установлен)
         public DateTime? CalculateReminderDate()

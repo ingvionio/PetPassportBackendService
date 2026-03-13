@@ -12,6 +12,7 @@ namespace PetPassport.Data
         public DbSet<Pet> Pets { get; set; } = null!;
         public DbSet<PetPhoto> PetPhotos { get; set; } = null!;
         public DbSet<PetEvent> Events { get; set; }
+        public DbSet<EventTemplate> EventTemplates { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

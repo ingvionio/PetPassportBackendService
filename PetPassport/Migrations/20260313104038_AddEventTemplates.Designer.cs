@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PetPassport.Data;
@@ -11,9 +12,11 @@ using PetPassport.Data;
 namespace PetPassport.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260313104038_AddEventTemplates")]
+    partial class AddEventTemplates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,62 +24,6 @@ namespace PetPassport.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("PetPassport.Models.EventTemplate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Clinic")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Diagnosis")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Doctor")
-                        .HasColumnType("text");
-
-                    b.Property<int>("EventType")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Medicine")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Parasite")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("PeriodUnit")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("PeriodValue")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Recommendations")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Referrals")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Remedy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int?>("TreatmentPeriodUnit")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TreatmentPeriodValue")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EventTemplates");
-                });
 
             modelBuilder.Entity("PetPassport.Models.Owner", b =>
                 {

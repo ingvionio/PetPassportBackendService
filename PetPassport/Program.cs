@@ -49,18 +49,13 @@ builder.Services.AddHostedService<ReminderBackgroundService>();
 var app = builder.Build();
 
 
-// Сид шаблонов
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await EventTemplateSeeder.SeedAsync(db);
-}
 
 // 6️⃣ Автоматически применяем миграции
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-   // db.Database.Migrate();
+    db.Database.Migrate();
+    await EventTemplateSeeder.SeedAsync(db);
 }
 
 // 7️⃣ Настройка конвейера

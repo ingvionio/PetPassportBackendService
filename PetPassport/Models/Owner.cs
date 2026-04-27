@@ -14,6 +14,9 @@ namespace PetPassport.Models
 
         public string? password { get; set; }
 
+        public string? PasswordHash { get; set; }
+
         public ICollection<Pet> Pets { get; set; } = new List<Pet>();
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

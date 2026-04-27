@@ -11,7 +11,7 @@ namespace PetPassport.Services
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ReminderBackgroundService> _logger;
-        private readonly TimeSpan _checkInterval = TimeSpan.FromSeconds(5); // Проверка каждую минуту (для тестирования)
+        private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(10);
 
         public ReminderBackgroundService(
             IServiceProvider serviceProvider,
@@ -23,7 +23,7 @@ namespace PetPassport.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("🚀 ReminderBackgroundService запущен. Проверка напоминаний каждые {Interval} минут", _checkInterval.TotalMinutes);
+            _logger.LogInformation("🚀 ReminderBackgroundService запущен. Интервал проверки: {Interval} мин", _checkInterval.TotalMinutes);
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -42,6 +42,22 @@ namespace PetPassport.Services
             _logger.LogInformation("ReminderBackgroundService остановлен");
         }
 
+        private async Task ExpireUpcomingEventsAsync(AppDbContext db, DateTime now, CancellationToken cancellationToken)
+        {
+            var expired = await db.Events
+                .Where(e => e.Status == EventStatus.Upcoming && e.EventDate < now)
+                .ToListAsync(cancellationToken);
+
+            if (expired.Count > 0)
+            {
+                foreach (var e in expired)
+                    e.Status = EventStatus.Indefinite;
+
+                await db.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("⏰ Переведено в Indefinite: {Count} событий", expired.Count);
+            }
+        }
+
         private async Task CheckAndSendRemindersAsync(CancellationToken cancellationToken)
         {
             using var scope = _serviceProvider.CreateScope();
@@ -49,6 +65,8 @@ namespace PetPassport.Services
             var botService = scope.ServiceProvider.GetRequiredService<IBotNotificationService>();
 
             var now = DateTime.UtcNow;
+
+            await ExpireUpcomingEventsAsync(db, now, cancellationToken);
 
             // Получаем все события с необходимыми данными через JOIN
             // Загружаем только нужные поля: имя питомца и TelegramId владельца

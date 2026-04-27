@@ -13,6 +13,7 @@ namespace PetPassport.Data
         public DbSet<PetPhoto> PetPhotos { get; set; } = null!;
         public DbSet<PetEvent> Events { get; set; }
         public DbSet<EventTemplate> EventTemplates { get; set; } = null!;
+        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -62,7 +63,17 @@ namespace PetPassport.Data
             // Настройка колонок: пример для decimal precision
             modelBuilder.Entity<Pet>()
                 .Property(p => p.WeightKg)
-                .HasColumnType("numeric(6,2)"); // максимум 9999.99 кг, 2 знака после запятой
+                .HasColumnType("numeric(6,2)");
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(rt => rt.Owner)
+                .WithMany(o => o.RefreshTokens)
+                .HasForeignKey(rt => rt.OwnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(rt => rt.Token)
+                .IsUnique();
         }
     }
 

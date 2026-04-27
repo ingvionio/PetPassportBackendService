@@ -64,11 +64,10 @@ public class PetsController : ControllerBase
 
     // POST api/pets
     [HttpPost]
-    public async Task<ActionResult<int>> CreatePet([FromBody] PetCreateDto dto)
+    public async Task<ActionResult<int>> CreatePet([FromForm] PetCreateDto dto)
     {
-        // Проверяем, что владелец существует
         var owner = await _db.Owners
-            .Include(o => o.Pets) // чтобы обновить список питомцев
+            .Include(o => o.Pets)
             .FirstOrDefaultAsync(o => o.Id == dto.OwnerId);
 
         if (owner == null)
@@ -77,7 +76,6 @@ public class PetsController : ControllerBase
         if (owner.Pets.Count >= 4)
             return BadRequest("Превышен лимит: у владельца не может быть больше 4 питомцев.");
 
-        // Создаём нового питомца
         var pet = new Pet
         {
             Name = dto.Name,
@@ -89,15 +87,40 @@ public class PetsController : ControllerBase
         };
 
         _db.Pets.Add(pet);
-        // Добавляем питомца в коллекцию владельца
         owner.Pets.Add(pet);
-
         await _db.SaveChangesAsync();
 
-        // Возвращаем Id нового питомца
+        // Сохраняем фото если переданы
+        if (dto.Photos != null && dto.Photos.Any())
+        {
+            if (dto.Photos.Count > 4)
+                return BadRequest("Можно добавить не более 4 фотографий.");
+
+            var uploadFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "pets", pet.Id.ToString());
+            Directory.CreateDirectory(uploadFolder);
+
+            foreach (var file in dto.Photos)
+            {
+                if (file.Length == 0) continue;
+
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var filePath = Path.Combine(uploadFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                    await file.CopyToAsync(stream);
+
+                _db.PetPhotos.Add(new PetPhoto
+                {
+                    Url = $"/uploads/pets/{pet.Id}/{fileName}",
+                    PetId = pet.Id
+                });
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
         return Ok(pet.Id);
     }
-
 
     [HttpGet("{id}")]
     public async Task<ActionResult<PetDto>> GetPet(int id)
@@ -312,6 +335,8 @@ public class PetCreateDto
     public decimal? WeightKg { get; set; }
     public DateOnly? BirthDate { get; set; }
     public int OwnerId { get; set; } // привязка к владельцу
+
+    public List<IFormFile>? Photos { get; set; }
 }
 
 public class PetDto : PetCreateDto

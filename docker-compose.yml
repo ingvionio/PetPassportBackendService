@@ -31,11 +31,11 @@ services:
     environment:
       # Хост базы данных - это имя сервиса: 'postgres'
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=PetPassportDb;Username=postgres;Password=${POSTGRES_PASSWORD}"
-      # Адрес бота - это имя сервиса: 'telegram-bot'
-      BotService__BaseUrl: "http://telegram-bot:8080" # <-- Исправлено для внутренней связи Docker
+      BotService__BaseUrl: "http://telegram-bot:8080"
       ASPNETCORE_URLS: "http://0.0.0.0:8080"
       CORS_ORIGINS: "${CORS_ORIGINS}"
       ASPNETCORE_ENVIRONMENT: Production
+      BOT_TOKEN: "${BOT_TOKEN}"
     ports:
       - "8080:8080" # Публикуем API на порт 80 хоста (стандартный HTTP)
     depends_on:

@@ -64,7 +64,7 @@ public class PetsController : ControllerBase
 
     // POST api/pets
     [HttpPost]
-    public async Task<ActionResult<int>> CreatePet([FromForm] PetCreateDto dto)
+    public async Task<ActionResult<int>> CreatePet([FromBody] PetCreateDto dto)
     {
         var owner = await _db.Owners
             .Include(o => o.Pets)
@@ -89,35 +89,6 @@ public class PetsController : ControllerBase
         _db.Pets.Add(pet);
         owner.Pets.Add(pet);
         await _db.SaveChangesAsync();
-
-        // Сохраняем фото если переданы
-        if (dto.Photos != null && dto.Photos.Any())
-        {
-            if (dto.Photos.Count > 4)
-                return BadRequest("Можно добавить не более 4 фотографий.");
-
-            var uploadFolder = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "pets", pet.Id.ToString());
-            Directory.CreateDirectory(uploadFolder);
-
-            foreach (var file in dto.Photos)
-            {
-                if (file.Length == 0) continue;
-
-                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var filePath = Path.Combine(uploadFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                    await file.CopyToAsync(stream);
-
-                _db.PetPhotos.Add(new PetPhoto
-                {
-                    Url = $"/uploads/pets/{pet.Id}/{fileName}",
-                    PetId = pet.Id
-                });
-            }
-
-            await _db.SaveChangesAsync();
-        }
 
         return Ok(pet.Id);
     }
@@ -335,8 +306,6 @@ public class PetCreateDto
     public decimal? WeightKg { get; set; }
     public DateOnly? BirthDate { get; set; }
     public int OwnerId { get; set; } // привязка к владельцу
-
-    public List<IFormFile>? Photos { get; set; }
 }
 
 public class PetDto : PetCreateDto

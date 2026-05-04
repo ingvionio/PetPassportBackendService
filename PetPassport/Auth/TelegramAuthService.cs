@@ -53,6 +53,8 @@ namespace PetPassport.Auth
                 .Select(kv => $"{kv.Key}={kv.Value}"));
 
             Console.WriteLine($"[TG] dataCheckString keys used: {string.Join(", ", pairs.Keys.Where(k => k != "hash" && k != "signature").OrderBy(k => k))}");
+            Console.WriteLine($"[TG] dataCheckString (first 200): {dataCheckString[..Math.Min(200, dataCheckString.Length)]}");
+            Console.WriteLine($"[TG] botToken prefix: {_botToken[..Math.Min(15, _botToken.Length)]}");
 
             // secret_key = HMAC_SHA256("WebAppData", bot_token)
             var secretKey = HMACSHA256.HashData(

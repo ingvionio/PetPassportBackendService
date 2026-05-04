@@ -24,11 +24,10 @@ namespace PetPassport.Controllers.V2
         }
 
         /// <summary>Вход через Telegram Web App</summary>
-        /// <remarks>Передаёт initData из window.Telegram.WebApp.initData. Бэкенд верифицирует HMAC-подпись Telegram и выдаёт токены. Создаёт аккаунт автоматически при первом входе.</remarks>
+        /// <remarks>Передаёт initData из window.Telegram.WebApp.initData. Создаёт аккаунт автоматически при первом входе.</remarks>
         [HttpPost("telegram")]
         public async Task<ActionResult<AuthResponse>> LoginTelegram([FromBody] TelegramAuthRequest request)
         {
-            Console.WriteLine($"[CTRL] raw initData: {request.InitData}");
             var userInfo = _telegram.Verify(request.InitData);
             if (userInfo is null)
                 return Unauthorized("Невалидные данные Telegram");

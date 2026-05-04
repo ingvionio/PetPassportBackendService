@@ -69,7 +69,8 @@ namespace PetPassport.Auth
 
             var expectedHashHex = Convert.ToHexString(expectedHash).ToLower();
 
-            Console.WriteLine($"[TG] receivedHash={receivedHash[..8]}... expectedHash={expectedHashHex[..8]}... match={string.Equals(receivedHash, expectedHashHex, StringComparison.OrdinalIgnoreCase)}");
+            Console.WriteLine($"[TG] receivedHash={receivedHash}");
+            Console.WriteLine($"[TG] expectedHash={expectedHashHex}");
 
             if (!string.Equals(receivedHash, expectedHashHex, StringComparison.OrdinalIgnoreCase))
             {

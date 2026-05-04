@@ -35,9 +35,9 @@ namespace PetPassport.Auth
             if (!pairs.TryGetValue("hash", out var receivedHash))
                 return null;
 
-            // Build data_check_string: sorted key=value pairs excluding "hash", joined with \n
+            // Build data_check_string: sorted key=value pairs excluding "hash" and "signature", joined with \n
             var dataCheckString = string.Join("\n", pairs
-                .Where(kv => kv.Key != "hash")
+                .Where(kv => kv.Key != "hash" && kv.Key != "signature")
                 .OrderBy(kv => kv.Key)
                 .Select(kv => $"{kv.Key}={kv.Value}"));
 

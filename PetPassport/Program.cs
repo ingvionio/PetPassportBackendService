@@ -121,7 +121,10 @@ builder.Services.AddSwaggerGen(c =>
     c.SchemaFilter<PetPassport.Swagger.EnumSchemaFilter>();
 });
 
-// 6️⃣ Bot notification service
+// 6️⃣ Email service
+builder.Services.AddTransient<IEmailService, EmailService>();
+
+// 7️⃣ Bot notification service
 builder.Services.AddHttpClient<IBotNotificationService, BotNotificationService>(client =>
 {
     var baseUrl = builder.Configuration["BotService:BaseUrl"] ?? "http://localhost:5000";
@@ -129,7 +132,7 @@ builder.Services.AddHttpClient<IBotNotificationService, BotNotificationService>(
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-// 7️⃣ Background reminder service
+// 9️⃣ Background reminder service
 builder.Services.AddHostedService<ReminderBackgroundService>();
 
 var app = builder.Build();

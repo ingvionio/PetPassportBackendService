@@ -10,10 +10,11 @@ namespace PetPassport.Auth
 
         public TelegramAuthService(IConfiguration config)
         {
-            // Читаем из Telegram:BotToken (appsettings) или BOT_TOKEN (env var / docker-compose)
             _botToken = config["Telegram:BotToken"]
                 ?? config["BOT_TOKEN"]
+                ?? Environment.GetEnvironmentVariable("BOT_TOKEN")
                 ?? "";
+            Console.WriteLine($"[TG] botToken loaded, length={_botToken.Length}");
         }
 
         /// <summary>

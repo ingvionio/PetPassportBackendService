@@ -10,13 +10,13 @@ namespace PetPassport.Auth
 
         public TelegramAuthService(IConfiguration config)
         {
-            _botToken = new[]
+            _botToken = (new[]
                 {
                     config["Telegram:BotToken"],
                     config["BOT_TOKEN"],
                     Environment.GetEnvironmentVariable("BOT_TOKEN")
                 }
-                .FirstOrDefault(s => !string.IsNullOrEmpty(s)) ?? "";
+                .FirstOrDefault(s => !string.IsNullOrEmpty(s)) ?? "").Trim();
         }
 
         /// <summary>
@@ -53,8 +53,9 @@ namespace PetPassport.Auth
                 .Select(kv => $"{kv.Key}={kv.Value}"));
 
             Console.WriteLine($"[TG] dataCheckString keys used: {string.Join(", ", pairs.Keys.Where(k => k != "hash" && k != "signature").OrderBy(k => k))}");
-            Console.WriteLine($"[TG] dataCheckString (first 200): {dataCheckString[..Math.Min(200, dataCheckString.Length)]}");
-            Console.WriteLine($"[TG] botToken prefix: {_botToken[..Math.Min(15, _botToken.Length)]}");
+            var displayStr = dataCheckString.Replace("\n", "|")[..Math.Min(300, dataCheckString.Length)];
+            Console.WriteLine($"[TG] dataCheckString: {displayStr}");
+            Console.WriteLine($"[TG] botToken len={_botToken.Length}, prefix={_botToken[..Math.Min(15, _botToken.Length)]}");
 
             // secret_key = HMAC_SHA256("WebAppData", bot_token)
             var secretKey = HMACSHA256.HashData(

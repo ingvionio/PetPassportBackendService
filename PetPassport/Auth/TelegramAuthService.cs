@@ -23,7 +23,10 @@ namespace PetPassport.Auth
         public TelegramUserInfo? Verify(string initData)
         {
             if (string.IsNullOrEmpty(_botToken) || string.IsNullOrEmpty(initData))
+            {
+                Console.WriteLine($"[TG] Verify failed: botToken empty={string.IsNullOrEmpty(_botToken)}, initData empty={string.IsNullOrEmpty(initData)}");
                 return null;
+            }
 
             var pairs = initData.Split('&')
                 .Select(p => p.Split('=', 2))
@@ -32,14 +35,21 @@ namespace PetPassport.Auth
                     p => Uri.UnescapeDataString(p[0]),
                     p => Uri.UnescapeDataString(p[1]));
 
+            Console.WriteLine($"[TG] keys: {string.Join(", ", pairs.Keys)}");
+
             if (!pairs.TryGetValue("hash", out var receivedHash))
+            {
+                Console.WriteLine("[TG] Verify failed: no hash field");
                 return null;
+            }
 
             // Build data_check_string: sorted key=value pairs excluding "hash" and "signature", joined with \n
             var dataCheckString = string.Join("\n", pairs
                 .Where(kv => kv.Key != "hash" && kv.Key != "signature")
                 .OrderBy(kv => kv.Key)
                 .Select(kv => $"{kv.Key}={kv.Value}"));
+
+            Console.WriteLine($"[TG] dataCheckString keys used: {string.Join(", ", pairs.Keys.Where(k => k != "hash" && k != "signature").OrderBy(k => k))}");
 
             // secret_key = HMAC_SHA256("WebAppData", bot_token)
             var secretKey = HMACSHA256.HashData(
@@ -53,8 +63,13 @@ namespace PetPassport.Auth
 
             var expectedHashHex = Convert.ToHexString(expectedHash).ToLower();
 
+            Console.WriteLine($"[TG] receivedHash={receivedHash[..8]}... expectedHash={expectedHashHex[..8]}... match={string.Equals(receivedHash, expectedHashHex, StringComparison.OrdinalIgnoreCase)}");
+
             if (!string.Equals(receivedHash, expectedHashHex, StringComparison.OrdinalIgnoreCase))
+            {
+                Console.WriteLine("[TG] Verify failed: HMAC mismatch");
                 return null;
+            }
 
             // Optional: reject data older than 24 hours
             if (pairs.TryGetValue("auth_date", out var authDateStr)

@@ -10,20 +10,13 @@ namespace PetPassport.Auth
 
         public TelegramAuthService(IConfiguration config)
         {
-            var allEnv = Environment.GetEnvironmentVariables();
-            var botRelated = allEnv.Keys.Cast<string>()
-                .Where(k => k.Contains("BOT", StringComparison.OrdinalIgnoreCase)
-                         || k.Contains("TELEGRAM", StringComparison.OrdinalIgnoreCase))
-                .Select(k => $"{k}={allEnv[k]?.ToString()?.Substring(0, Math.Min(8, allEnv[k]!.ToString()!.Length))}...")
-                .ToList();
-            Console.WriteLine($"[TG] env vars with BOT/TELEGRAM: [{string.Join(", ", botRelated)}]");
-            Console.WriteLine($"[TG] config[BOT_TOKEN]={config["BOT_TOKEN"]?.Substring(0, Math.Min(8, config["BOT_TOKEN"]?.Length ?? 0))}");
-
-            _botToken = config["Telegram:BotToken"]
-                ?? config["BOT_TOKEN"]
-                ?? Environment.GetEnvironmentVariable("BOT_TOKEN")
-                ?? "";
-            Console.WriteLine($"[TG] botToken loaded, length={_botToken.Length}");
+            _botToken = new[]
+                {
+                    config["Telegram:BotToken"],
+                    config["BOT_TOKEN"],
+                    Environment.GetEnvironmentVariable("BOT_TOKEN")
+                }
+                .FirstOrDefault(s => !string.IsNullOrEmpty(s)) ?? "";
         }
 
         /// <summary>

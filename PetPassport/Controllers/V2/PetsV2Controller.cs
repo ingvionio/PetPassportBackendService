@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetPassport.Data;
 using PetPassport.Models;
+using PetPassport.Services;
 
 namespace PetPassport.Controllers.V2
 {
@@ -72,9 +73,17 @@ namespace PetPassport.Controllers.V2
             var pet = new Pet
             {
                 Name = dto.Name,
+                Species = dto.Species,
+                Gender = dto.Gender,
                 Breed = dto.Breed,
+                Color = dto.Color,
+                MicrochipNumber = dto.MicrochipNumber,
                 WeightKg = dto.WeightKg,
                 BirthDate = dto.BirthDate,
+                IsNeutered = dto.IsNeutered,
+                Allergies = dto.Allergies,
+                ChronicConditions = dto.ChronicConditions,
+                BloodType = dto.BloodType,
                 OwnerId = CurrentOwnerId
             };
 
@@ -105,9 +114,17 @@ namespace PetPassport.Controllers.V2
                 return Forbid();
 
             if (!string.IsNullOrWhiteSpace(dto.Name)) pet.Name = dto.Name;
+            if (dto.Species.HasValue) pet.Species = dto.Species;
+            if (dto.Gender.HasValue) pet.Gender = dto.Gender;
             if (!string.IsNullOrWhiteSpace(dto.Breed)) pet.Breed = dto.Breed;
+            if (dto.Color != null) pet.Color = dto.Color;
+            if (dto.MicrochipNumber != null) pet.MicrochipNumber = dto.MicrochipNumber;
             if (dto.WeightKg.HasValue) pet.WeightKg = dto.WeightKg;
             if (dto.BirthDate.HasValue) pet.BirthDate = dto.BirthDate;
+            if (dto.IsNeutered.HasValue) pet.IsNeutered = dto.IsNeutered;
+            if (dto.Allergies != null) pet.Allergies = dto.Allergies;
+            if (dto.ChronicConditions != null) pet.ChronicConditions = dto.ChronicConditions;
+            if (dto.BloodType != null) pet.BloodType = dto.BloodType;
 
             await _db.SaveChangesAsync();
             return Ok(new { message = "Информация о питомце обновлена успешно." });
@@ -215,6 +232,49 @@ namespace PetPassport.Controllers.V2
             return Ok(new { message = "Фотография успешно удалена." });
         }
 
+        /// <summary>Экспорт паспорта питомца в PDF</summary>
+        /// <remarks>
+        /// Страница с данными питомца включается всегда.
+        /// Дополнительные разделы — отдельные страницы, управляются параметрами:
+        /// - includeVaccines=true — таблица прививок
+        /// - includeTreatments=true — таблица обработок от паразитов
+        /// - includeVisits=true — таблица визитов к врачу
+        /// </remarks>
+        [HttpGet("{id}/passport/pdf")]
+        public async Task<IActionResult> GetPassportPdf(
+            int id,
+            [FromQuery] bool includeVaccines = false,
+            [FromQuery] bool includeTreatments = false,
+            [FromQuery] bool includeVisits = false)
+        {
+            var pet = await _db.Pets
+                .Include(p => p.Photos)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (pet is null) return NotFound();
+            if (pet.OwnerId != CurrentOwnerId) return Forbid();
+
+            var vaccines = includeVaccines
+                ? await _db.Events.OfType<VaccineEvent>().Where(e => e.PetId == id).ToListAsync()
+                : new List<VaccineEvent>();
+
+            var treatments = includeTreatments
+                ? await _db.Events.OfType<TreatmentEvent>().Where(e => e.PetId == id).ToListAsync()
+                : new List<TreatmentEvent>();
+
+            var visits = includeVisits
+                ? await _db.Events.OfType<DoctorVisitEvent>().Where(e => e.PetId == id).ToListAsync()
+                : new List<DoctorVisitEvent>();
+
+            var pdf = PetPassportPdfGenerator.Generate(
+                pet, vaccines, treatments, visits,
+                includeVaccines, includeTreatments, includeVisits,
+                _env.WebRootPath ?? "wwwroot");
+
+            var safeName = string.Concat(pet.Name.Split(Path.GetInvalidFileNameChars()));
+            return File(pdf, "application/pdf", $"passport-{safeName}.pdf");
+        }
+
         /// <summary>Удалить питомца</summary>
         /// <remarks>Каскадно удаляет все события и фотографии питомца.</remarks>
         [HttpDelete("{id}")]
@@ -244,9 +304,17 @@ namespace PetPassport.Controllers.V2
         {
             Id = pet.Id,
             Name = pet.Name,
+            Species = pet.Species,
+            Gender = pet.Gender,
             Breed = pet.Breed,
+            Color = pet.Color,
+            MicrochipNumber = pet.MicrochipNumber,
             WeightKg = pet.WeightKg,
             BirthDate = pet.BirthDate,
+            IsNeutered = pet.IsNeutered,
+            Allergies = pet.Allergies,
+            ChronicConditions = pet.ChronicConditions,
+            BloodType = pet.BloodType,
             OwnerId = pet.OwnerId,
             Photos = pet.Photos.Select(ph => new PetPhotoDto
             {
@@ -316,9 +384,17 @@ namespace PetPassport.Controllers.V2
     public class PetCreateV2Dto
     {
         public string Name { get; set; } = null!;
+        public PetSpecies? Species { get; set; }
+        public PetGender? Gender { get; set; }
         public string? Breed { get; set; }
+        public string? Color { get; set; }
+        public string? MicrochipNumber { get; set; }
         public decimal? WeightKg { get; set; }
         public DateOnly? BirthDate { get; set; }
+        public bool? IsNeutered { get; set; }
+        public string? Allergies { get; set; }
+        public string? ChronicConditions { get; set; }
+        public string? BloodType { get; set; }
         public List<IFormFile>? Photos { get; set; }
     }
 }

@@ -293,19 +293,34 @@ public class PetsController : ControllerBase
 public class PetUpdateDto
 {
     public string? Name { get; set; }
+    public PetPassport.Models.PetSpecies? Species { get; set; }
+    public PetPassport.Models.PetGender? Gender { get; set; }
     public string? Breed { get; set; }
+    public string? Color { get; set; }
+    public string? MicrochipNumber { get; set; }
     public decimal? WeightKg { get; set; }
     public DateOnly? BirthDate { get; set; }
+    public bool? IsNeutered { get; set; }
+    public string? Allergies { get; set; }
+    public string? ChronicConditions { get; set; }
+    public string? BloodType { get; set; }
 }
 
-// DTOs/PetCreateDto.cs
 public class PetCreateDto
 {
     public string Name { get; set; } = null!;
+    public PetPassport.Models.PetSpecies? Species { get; set; }
+    public PetPassport.Models.PetGender? Gender { get; set; }
     public string? Breed { get; set; }
+    public string? Color { get; set; }
+    public string? MicrochipNumber { get; set; }
     public decimal? WeightKg { get; set; }
     public DateOnly? BirthDate { get; set; }
-    public int OwnerId { get; set; } // привязка к владельцу
+    public int OwnerId { get; set; }
+    public bool? IsNeutered { get; set; }
+    public string? Allergies { get; set; }
+    public string? ChronicConditions { get; set; }
+    public string? BloodType { get; set; }
 }
 
 public class PetDto : PetCreateDto
@@ -313,6 +328,7 @@ public class PetDto : PetCreateDto
     public int Id { get; set; }
     public List<PetPhotoDto> Photos { get; set; } = new();
 }
+
 public class PetPhotoDto
 {
     public int Id { get; set; }

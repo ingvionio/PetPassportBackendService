@@ -7,6 +7,9 @@ using Microsoft.OpenApi.Models;
 using PetPassport.Auth;
 using PetPassport.Data;
 using PetPassport.Services;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

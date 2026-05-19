@@ -76,7 +76,7 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_TG_BOT_URL: ${VITE_TG_BOT_URL}
-        VITE_GITHUB_URL: ${VITE_GITHUB_URL}
+        VITE_RUSTORE_URL: ${VITE_RUSTORE_URL}
     container_name: petpassport-frontend
     depends_on:
       - api
